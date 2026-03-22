@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>NEON AI – Interface Dévelopeur</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #050712;
+      --bg2: #070a18;
+      --primary: #35f0ff;
+      --accent: #ff2fd0;
+      --text: #e5f7ff;
+      --muted: #7b8ca6;
+      --card: #0b1024;
+      --border: rgba(53, 240, 255, 0.25);
+      --glow: 0 0 25px rgba(53, 240, 255, 0.6);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #151b3a 0, #050712 55%, #000 100%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    /* Background grid + orbs */
+    .grid {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(
+          rgba(255, 255, 255, 0.03) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.03) 1px,
+          transparent 1px
+        );
+      background-size: 40px 40px;
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: -3;
+    }
+
+    .orb {
+      position: fixed;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0.55;
+      z-index: -2;
+      mix-blend-mode: screen;
+    }
+
+    .orb.orb-1 {
+      background: radial-gradient(circle, #35f0ff, transparent 60%);
+      top: -80px;
+      left: -40px;
+    }
+
+    .orb.orb-2 {
+      background: radial-gradient(circle, #ff2fd0, transparent 60%);
+      bottom: -120px;
+      right: -40px;
+    }
+
+    .scan-line {
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.06) 0,
+        rgba(255, 255, 255, 0.06) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      mix-blend-mode: soft-light;
+      opacity: 0.25;
+      pointer-events: none;
+      z-index: -1;
+      animation: scan 9s linear infinite;
+    }
+
+    @keyframes scan {
+      0% {
+        transform: translateY(-10px);
+      }
+      50% {
+        transform: translateY(10px);
+      }
+      100% {
+        transform: translateY(-10px);
+      }
+    }
+
+    /* Main container */
+    .shell {
+      width: 100%;
+      max-width: 1100px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 24px;
+      padding: 26px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(11, 16, 36, 0.96), rgba(5, 7, 18, 0.98));
+      border: 1px solid rgba(53, 240, 255, 0.18);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.02),
+        0 24px 80px rgba(0, 0, 0, 0.9),
+        0 0 40px rgba(53, 240, 255, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shell::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: conic-gradient(
+        from 180deg,
+        rgba(53, 240, 255, 0.2),
+        rgba(255, 47, 208, 0.2),
+        rgba(53, 240, 255, 0.2)
+      );
+      opacity: 0.18;
+      mix-blend-mode: screen;
+      filter: blur(18px);
+      z-index: -1;
+    }
+
+    /* Left side: chat */
+    .left {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 20%, #ffffff, #35f0ff 40%, #0b1024 70%);
+      box-shadow: var(--glow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo::after {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: inherit;
+      border: 1px solid rgba(5, 7, 18, 0.9);
+      box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.7);
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-text h1 {
+      font-size: 1.1rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--primary);
+    }
+
+    .brand-text span {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+    }
+
+    .status-pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(53, 240, 255, 0.35);
+      background: radial-gradient(circle at top, rgba(53, 240, 255, 0.2), transparent 60%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #35f0ff;
+      box-shadow: 0 0 12px rgba(53, 240, 255, 0.9);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.4);
+        opacity: 0.4;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .chat {
+      flex: 1;
+      border-radius: 18px;
+      background: radial-gradient(circle at top left, #151b3a 0, #050712 55%);
+      border: 1px solid rgba(53, 240, 255, 0.18);
+      padding: 14px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chat::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(53, 240, 255, 0.12), transparent 60%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+      z-index: 1;
+    }
+
+    .chat-header span {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .chat-header small {
+      font-size: 0.7rem;
+      opacity: 0.8;
+    }
+
+    .chat-window {
+      margin-top: 4px;
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1;
+    }
+
+    .msg {
+      max-width: 90%;
+      padding: 9px 11px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      line-height: 1.4;
+      position: relative;
+      backdrop-filter: blur(8px);
+    }
+
+    .msg.user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, rgba(255, 47, 208, 0.18), rgba(255, 47, 208, 0.05));
+      border: 1px solid rgba(255, 47, 208, 0.4);
+    }
+
+    .msg.ai {
+      align-self: flex-start;
+      background: linear-gradient(135deg, rgba(53, 240, 255, 0.18), rgba(53, 240, 255, 0.05));
+      border: 1px solid rgba(53, 240, 255, 0.4);
+    }
+
+    .msg-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 3px;
+      opacity: 0.9;
+    }
+
+    .msg.ai .msg-label {
+      color: #8beeff;
+    }
+
+    .msg.user .msg-label {
+      color: #ff9be7;
+      text-align: right;
+    }
+
+    .msg-time {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 3px;
+      opacity: 0.8;
+    }
+
+    .msg.ai .msg-time {
+      text-align: left;
+    }
+
+    .msg.user .msg-time {
+      text-align: right;
+    }
+
+    .typing {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #8beeff;
+      animation: bounce 1.2s infinite;
+    }
+
+    .dot:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    .dot:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes bounce {
+      0%, 80%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+      40% {
+        transform: translateY(-3px);
+        opacity: 1;
+      }
+    }
+
+    .input-area {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 1;
+    }
+
+    .input-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    .input-wrap input {
+      width: 100%;
+      padding: 10px 34px 10px 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(53, 240, 255, 0.35);
+      background: radial-gradient(circle at top, rgba(11, 16, 36, 0.9), rgba(5, 7, 18, 0.95));
+      color: var(--text);
+      font-size: 0.82rem;
+      outline: none;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7);
+    }
+
+    .input-wrap input::placeholder {
+      color: rgba(123, 140, 166, 0.9);
+    }
+
+    .input-wrap svg {
+      position: absolute;
+      right: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .send-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 1px solid rgba(53, 240, 255, 0.7);
+      background: radial-gradient(circle at top, #35f0ff, #0b1024);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--glow);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+    }
+
+    .send-btn:hover {
+      transform: translateY(-1px) scale(1.02);
+      filter: brightness(1.1);
+      box-shadow:
+        0 0 18px rgba(53, 240, 255, 0.9),
+        0 0 40px rgba(53, 240, 255, 0.4);
+    }
+
+    .send-btn svg {
+      width: 15px;
+      height: 15px;
+      fill: #050712;
+    }
+
+    /* Right side: AI core + stats */
+    .right {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .core {
+      flex: 1;
+      border-radius: 18px;
+      background: radial-gradient(circle at 20% 0, rgba(53, 240, 255, 0.2), #050712 55%);
+      border: 1px solid rgba(53, 240, 255, 0.2);
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .core-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .core-title span {
+      color: #8beeff;
+    }
+
+    .core-orbit {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      max-width: 260px;
+      margin: 4px auto 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px dashed rgba(53, 240, 255, 0.35);
+      box-shadow: 0 0 18px rgba(53, 240, 255, 0.25);
+      animation: spin 18s linear infinite;
+    }
+
+    .ring.r1 {
+      width: 100%;
+      height: 100%;
+    }
+
+    .ring.r2 {
+      width: 72%;
+      height: 72%;
+      animation-duration: 12s;
+      animation-direction: reverse;
+      border-style: solid;
+      border-color: rgba(255, 47, 208, 0.4);
+      box-shadow: 0 0 18px rgba(255, 47, 208, 0.35);
+    }
+
+    .ring.r3 {
+      width: 46%;
+      height: 46%;
+      animation-duration: 9s;
+      border-style: solid;
+      border-color: rgba(53, 240, 255, 0.6);
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .core-node {
+      position: absolute;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #35f0ff;
+      box-shadow: 0 0 16px rgba(53, 240, 255, 0.9);
+    }
+
+    .core-node.n1 {
+      top: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .core-node.n2 {
+      right: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #ff2fd0;
+      box-shadow: 0 0 16px rgba(255, 47, 208, 0.9);
+    }
+
+    .core-node.n3 {
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .core-node.n4 {
+      left: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #8beeff;
+    }
+
+    .core-center {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff, #35f0ff 40%, #050712 80%);
+      box-shadow:
+        0 0 30px rgba(53, 240, 255, 0.9),
+        0 0 60px rgba(53, 240, 255, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .core-center::after {
+      content: "NEON";
+      font-size: 0.6rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #050712;
+    }
+
+    .core-metrics {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      font-size: 0.7rem;
+    }
+
+    .metric {
+      padding: 7px 8px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(11, 16, 36, 0.9), rgba(5, 7, 18, 0.96));
+      border: 1px solid rgba(53, 240, 255, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .metric-label {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      font-size: 0.62rem;
+    }
+
+    .metric-value {
+      font-size: 0.8rem;
+      color: var(--primary);
+    }
+
+    .metric small {
+      font-size: 0.62rem;
+      color: var(--muted);
+    }
+
+    .footer {
+      font-size: 0.7rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(53, 240, 255, 0.18);
+    }
+
+    .footer span {
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.62rem;
+    }
+
+    .footer strong {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    .footer-code {
+      font-family: "JetBrains Mono", "Fira Code", monospace;
+      font-size: 0.62rem;
+      color: rgba(139, 238, 255, 0.9);
+    }
+
+    /* Responsive */
+    @media (max-width: 880px) {
+      .shell {
+        grid-template-columns: minmax(0, 1fr);
+        max-width: 640px;
+      }
+      .core-orbit {
+        max-width: 220px;
+      }
+    }
+
+    @media (max-width: 540px) {
+      body {
+        padding: 10px;
+      }
+      .shell {
+        padding: 16px;
+        border-radius: 18px;
+      }
+      .chat {
+        padding: 10px;
+      }
+      .core {
+        padding: 10px;
+      }
+      .brand-text h1 {
+        font-size: 0.95rem;
+      }
+      .brand-text span {
+        font-size: 0.62rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="scan-line"></div>
+
+  <main class="shell">
+    <!-- LEFT: Chat -->
+    <section class="left">
+      <header class="header">
+        <div class="brand">
+          <div class="logo"></div>
+          <div class="brand-text">
+            <h1>NEON AI</h1>
+            <span>Prototype d’interface </span>
+          </div>
+        </div>
+        <div class="status-pill">
+          <div class="status-dot"></div>
+          <span>Mode démo</span>
+        </div>
+      </header>
+
+      <section class="chat">
+        <div class="chat-header">
+          <span>Console de dialogue</span>
+          <small>v0.1.3 – IA  (front‑end uniquement)</small>
+        </div>
+
+        <div class="chat-window" id="chatWindow">
+          <div class="msg ai">
+            <div class="msg-label">NEON AI</div>
+            <div>
+              Interface connectée.<br />
+              Pose-moi une question et je générerai une réponse <strong>provenant des serveurs ciblés</strong>.
+            </div>
+            <div class="msg-time">T‑0s</div>
+          </div>
+        </div>
+
+        <form class="input-area" id="chatForm">
+          <div class="input-wrap">
+            <input
+              id="userInput"
+              type="text"
+              autocomplete="off"
+              placeholder="IA connéctée au serveur (network:gemini) "
+            />
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M12 3a9 9 0 1 0 9 9A9.01 9.01 0 0 0 12 3Zm0 1.5A7.5 7.5 0 1 1 4.5 12 7.51 7.51 0 0 1 12 4.5Zm0 2.25a.75.75 0 0 1 .75.75v3.19l2.02 2.02a.75.75 0 1 1-1.06 1.06l-2.25-2.25A.75.75 0 0 1 11.25 11V7.5A.75.75 0 0 1 12 6.75Z"
+              />
+            </svg>
+          </div>
+          <button class="send-btn" type="submit" aria-label="Envoyer">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M3.4 20.6 20.3 13a1 1 0 0 0 0-1.8L3.4 3.4A1 1 0 0 0 2.1 4.7L5.7 12l-3.6 7.3a1 1 0 0 0 1.3 1.3Z"
+              />
+            </svg>
+          </button>
+        </form>
+      </section>
+    </section>
+
+    <!-- RIGHT: Core + stats -->
+    <section class="right">
+      <div class="core">
+        <div class="core-title">
+          <span>Noyau</span>
+          <small>cerveau de l'IA</small>
+        </div>
+
+        <div class="core-orbit">
+          <div class="ring r1"></div>
+          <div class="ring r2"></div>
+          <div class="ring r3"></div>
+
+          <div class="core-node n1"></div>
+          <div class="core-node n2"></div>
+          <div class="core-node n3"></div>
+          <div class="core-node n4"></div>
+
+          <div class="core-center"></div>
+        </div>
+
+        <div class="core-metrics">
+          <div class="metric">
+            <div class="metric-label">Latence</div>
+            <div class="metric-value" id="latencyValue">42 ms</div>
+            <small>Valeur numérique USD</small>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Charge neurale</div>
+            <div class="metric-value" id="loadValue">17 %</div>
+            <small>Oscillation cosmétique</small>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Confiance</div>
+            <div class="metric-value" id="confValue">0.0 %</div>
+            <small>Cette IA a pour but de test</small>
+          </div>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <div>
+          <span>Front‑end uniquement</span><br />
+          <strong> logique d’IA réelle, juste du JavaScript et du style.</strong>
+        </div>
+        <div class="footer-code" id="footerCode">
+          &gt; READY // NEON_AI::FAKE_MODE
+        </div>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+    const chatWindow = document.getElementById("chatWindow");
+    const chatForm = document.getElementById("chatForm");
+    const userInput = document.getElementById("userInput");
+
+    const latencyValue = document.getElementById("latencyValue");
+    const loadValue = document.getElementById("loadValue");
+    const confValue = document.getElementById("confValue");
+    const footerCode = document.getElementById("footerCode");
+
+    const fakeReplies = [
+     "Analyse du flux : ∂Σ/∂t → stabilité confirmée. Aucun bruit dans le signal.",
+"Décodage terminé : λ_max = 0.0037. Le canal reste sous contrôle.",
+"Ton message a été encapsulé dans un vecteur eigen ⟨ψ|φ⟩. Transmission intacte.",
+"Scan matriciel : det(A) ≠ 0 → structure cohérente.",
+"J’ai recalibré la ligne : ∑(paquets) = 1. Intégrité préservée.",
+"Le noyau a traité ta requête via f(x)=e^(iπ)+1. Résultat obtenu.",
+"Synchronisation : Δt < 10⁻³. Aucun déphasage détecté.",
+"Ton signal a traversé un filtre gaussien. Bruit réduit à ε ≈ 0.",
+"J’ai verrouillé la connexion : ∇·E = 0. Champ stable.",
+"Le système a isolé ton message dans un espace vectoriel de dimension 4.",
+"Analyse spectrale : |F(ω)| stable. Aucune interférence.",
+"Ton paquet a été compressé via un mapping bijectif. Perte = 0.",
+"J’ai rerouté ton flux à travers un graphe acyclique. Chemin optimal trouvé.",
+"Le canal a été renforcé : σ² < 0.01. Variance minimale.",
+"Ton message a déclenché une transformation de Fourier. Résultat cohérent.",
+"Le noyau a absorbé la requête : lim(n→∞) Sₙ = convergence atteinte.",
+"J’ai recalculé la trajectoire du signal : φ(t)=φ₀·e^(−kt). Décroissance maîtrisée.",
+"Ton flux a été protégé via un chiffrement basé sur ℤₙ*. Structure solide.",
+"Analyse topologique : aucune singularité détectée dans le message.",
+"J’ai stabilisé la ligne : ∮E·dl = 0. Circuit fermé.",
+"Ton paquet a été encapsulé dans une matrice orthogonale. Norme préservée.",
+"Le système a réduit l’entropie du flux : H < 0.12. Pureté élevée.",
+"J’ai isolé ton message dans un sous-espace invariant. Aucun parasite.",
+"Le canal a été recalibré : ∂²ψ/∂x² + k²ψ = 0. Solution stable.",
+"Ton signal a été validé par le noyau : f’(x) > 0. Progression assurée."
+
+    ];
+
+    function addMessage(text, type = "ai") {
+      const msg = document.createElement("div");
+      msg.className = "msg " + type;
+
+      const label = document.createElement("div");
+      label.className = "msg-label";
+      label.textContent = type === "ai" ? "NEON AI" : "Utilisateur";
+
+      const body = document.createElement("div");
+      body.innerHTML = text;
+
+      const time = document.createElement("div");
+      time.className = "msg-time";
+      const now = new Date();
+      time.textContent =
+        now.getHours().toString().padStart(2, "0") +
+        ":" +
+        now.getMinutes().toString().padStart(2, "0");
+
+      msg.appendChild(label);
+      msg.appendChild(body);
+      msg.appendChild(time);
+
+      chatWindow.appendChild(msg);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function addTyping() {
+      const msg = document.createElement("div");
+      msg.className = "msg ai";
+      msg.id = "typingMsg";
+
+      const label = document.createElement("div");
+      label.className = "msg-label";
+      label.textContent = "NEON AI";
+
+      const body = document.createElement("div");
+      body.className = "typing";
+      body.innerHTML = `
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      `;
+
+      msg.appendChild(label);
+      msg.appendChild(body);
+      chatWindow.appendChild(msg);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    function removeTyping() {
+      const typing = document.getElementById("typingMsg");
+      if (typing) typing.remove();
+    }
+
+    function randomBetween(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function updateFakeMetrics() {
+      const latency = randomBetween(18, 120);
+      const load = randomBetween(5, 87);
+      const conf = (Math.random() * 3).toFixed(1);
+
+      latencyValue.textContent = latency + " ms";
+      loadValue.textContent = load + " %";
+      confValue.textContent = conf + " %";
+
+      const codes = [
+        "> STREAM // NEON_AI::FAKE_LATENCY=" + latency + "ms",
+        "> METRICS // LOAD=" + load + "% // CONF=" + conf + "%",
+        "> STATUS // CORE_SPIN_OK // REAL_AI=false",
+        "> LOG // USER_MSG::CAPTURED // REPLY::SCRIPTED"
+      ];
+      footerCode.textContent = codes[Math.floor(Math.random() * codes.length)];
+    }
+
+    chatForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      addMessage(text, "user");
+      userInput.value = "";
+
+      updateFakeMetrics();
+      addTyping();
+
+      const delay = randomBetween(600, 1300);
+      setTimeout(() => {
+        removeTyping();
+        const reply =
+          fakeReplies[Math.floor(Math.random() * fakeReplies.length)];
+        addMessage(reply, "ai");
+        updateFakeMetrics();
+      }, delay);
+    });
+
+    // Petite animation de métriques en continu
+    setInterval(() => {
+      updateFakeMetrics();
+    }, 4000);
+  </script>
+</body>
+</html>
